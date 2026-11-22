@@ -4,12 +4,12 @@
 Elaboratore di testi nel browser, stile Word: schede Home, Inserisci, Layout, Revisione, Visualizza (+ Tabella contestuale), gruppi con etichette, ricerca dei comandi (⌘J), riquadro Struttura con i titoli, modalità Concentrazione, barra riducibile (doppio clic su una scheda), tema chiaro/scuro/auto.
 Salva da solo nel browser (localStorage), scarica .docx (libreria docx), apre .docx (mammoth), .html, .txt e .md. Esporta anche PDF (stampa), .html, .md, .txt.
 Si usa anche come app per Mac (cartella `mac/`: `./mac/build.sh` crea e installa `/Applications/Word.app`, Apple Silicon, e toglie la vecchia Parola.app).
-Fino a novembre 2026 si chiamava «Parola»: repository, cartella e indirizzo online sono rimasti `parola`.
+Fino a novembre 2026 si chiamava «Parola»; dal 22/11/2026 anche cartella, repository e indirizzo online si chiamano `word`.
 
 ## Dove sta online
-Repository: https://github.com/nemesiMark/parola (ramo `main`, pubblico).
-Online con GitHub Pages: https://nemesimark.github.io/parola/ (si aggiorna a ogni push su main).
-Compare tra i lavori del sito Nemesi Web (~/Desktop/Sites/site-nemesi), dove il nome è ancora «Parola».
+Repository: https://github.com/nemesiMark/word (ramo `main`, pubblico).
+Online con GitHub Pages: https://nemesimark.github.io/word/ (si aggiorna a ogni push su main).
+Compare tra i lavori del sito Nemesi Web (~/Desktop/Sites/nemesiWeb) come «Word».
 
 ## Come si prova in locale
 - Aprire `index.html` nel browser (doppio clic), oppure `python3 -m http.server 8000` nella cartella.
