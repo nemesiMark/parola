@@ -1,4 +1,4 @@
-/* Parola — conversione del documento (HTML dell'editor) in file .docx */
+/* Word — conversione del documento (HTML dell'editor) in file .docx */
 (function () {
   "use strict";
 
@@ -87,7 +87,8 @@
   function imageRun(img) {
     const r = img.getBoundingClientRect();
     let w = r.width || img.naturalWidth || 200, h = r.height || img.naturalHeight || 150;
-    if (w > MAX_IMG_W) { h = h * MAX_IMG_W / w; w = MAX_IMG_W; }
+    const maxW = root.clientWidth || MAX_IMG_W; // larghezza utile del foglio attuale
+    if (w > maxW) { h = h * maxW / w; w = maxW; }
     const bytes = imgBytes.get(img);
     return bytes ? new D.ImageRun({ data: bytes, transformation: { width: w, height: h } }) : new D.TextRun("");
   }
@@ -164,7 +165,7 @@
     }
     const bq = styleEl.closest && styleEl.closest("blockquote");
     if (bq && root.contains(bq) && !bq.getAttribute("style")) {
-      o.border = { ...(o.border || {}), left: { style: D.BorderStyle.SINGLE, size: 18, color: hex(cs(bq).borderLeftColor) || "A8482A", space: 8 } };
+      o.border = { ...(o.border || {}), left: { style: D.BorderStyle.SINGLE, size: 18, color: hex(cs(bq).borderLeftColor) || "2457D6", space: 8 } };
     }
     return new D.Paragraph(o);
   }
@@ -220,7 +221,7 @@
       else if (t === "TABLE") out.push(...table(n));
       else if (t === "HR") {
         if (n.classList.contains("page-break")) out.push(new D.Paragraph({ children: [new D.PageBreak()] }));
-        else out.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: "C9C1B5", space: 1 } } }));
+        else out.push(new D.Paragraph({ border: { bottom: { style: D.BorderStyle.SINGLE, size: 6, color: "CFD5E1", space: 1 } } }));
       } else if (hasBlockChild(n)) out.push(...blocksFrom(n));
       else out.push(paragraph(n, Array.from(n.childNodes)));
     });
@@ -261,7 +262,7 @@
     const children = blocksFrom(editor);
 
     const doc = new D.Document({
-      creator: "Parola",
+      creator: "Word",
       title: title || "Documento",
       styles: { default: { document: { run: { font: "Georgia", size: 24 } } } },
       numbering: { config: numberingConfig() },
@@ -281,5 +282,5 @@
     return D.Packer.toBlob(doc);
   }
 
-  window.ParolaDocx = { toBlob };
+  window.WordDocx = { toBlob };
 })();

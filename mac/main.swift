@@ -1,4 +1,4 @@
-// Parola per macOS — finestra nativa che contiene l'editor (cartella "web" nelle risorse dell'app).
+// Word per macOS — finestra nativa che contiene l'editor (cartella "web" nelle risorse dell'app).
 import Cocoa
 import WebKit
 import UniformTypeIdentifiers
@@ -10,6 +10,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
     var pageLoaded = false
     var pendingFiles: [URL] = []
 
+    // Colore della barra in alto dell'editor (chiaro/scuro), così la barra del titolo si fonde con la pagina
+    let chromeColor = NSColor(name: nil) { appearance in
+        appearance.bestMatch(from: [.darkAqua, .aqua]) == .darkAqua
+            ? NSColor(srgbRed: 0x15 / 255.0, green: 0x18 / 255.0, blue: 0x1e / 255.0, alpha: 1)
+            : NSColor(srgbRed: 0xf5 / 255.0, green: 0xf6 / 255.0, blue: 0xfa / 255.0, alpha: 1)
+    }
+
     // MARK: Avvio
 
     func applicationDidFinishLaunching(_ note: Notification) {
@@ -19,7 +26,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         config.websiteDataStore = .default()
         if #available(macOS 12.3, *) { config.preferences.isElementFullscreenEnabled = true }
         config.preferences.javaScriptCanOpenWindowsAutomatically = false
-        config.userContentController.add(self, name: "parola")
+        config.userContentController.add(self, name: "word")
 
         webView = WKWebView(frame: .zero, configuration: config)
         webView.navigationDelegate = self
@@ -27,16 +34,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         webView.allowsMagnification = false
         webView.setValue(false, forKey: "drawsBackground")
 
-        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1360, height: 880),
+        window = NSWindow(contentRect: NSRect(x: 0, y: 0, width: 1400, height: 900),
                           styleMask: [.titled, .closable, .miniaturizable, .resizable],
                           backing: .buffered, defer: false)
-        window.title = "Parola"
-        window.minSize = NSSize(width: 720, height: 500)
+        window.title = "Word"
+        window.titlebarAppearsTransparent = true
+        window.backgroundColor = chromeColor
+        window.minSize = NSSize(width: 760, height: 520)
         window.collectionBehavior = [.fullScreenPrimary]
         window.contentView = webView
         window.delegate = self
-        window.setFrameAutosaveName("ParolaFinestra")
-        if !window.setFrameUsingName("ParolaFinestra") { window.center() }
+        window.setFrameAutosaveName("WordFinestra")
+        if !window.setFrameUsingName("WordFinestra") { window.center() }
         window.makeKeyAndOrderFront(nil)
 
         let web = Bundle.main.resourceURL!.appendingPathComponent("web")
@@ -63,7 +72,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func sendFileToPage(_ url: URL) {
         guard let data = try? Data(contentsOf: url) else { return }
         let name = jsString(url.lastPathComponent)
-        webView.evaluateJavaScript("window.parola && window.parola.openBase64(\(name), \"\(data.base64EncodedString())\")")
+        webView.evaluateJavaScript("window.word && window.word.openBase64(\(name), \"\(data.base64EncodedString())\")")
+        NSDocumentController.shared.noteNewRecentDocumentURL(url)
     }
 
     // MARK: Messaggi dalla pagina
@@ -77,6 +87,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
             saveFile(data: data, suggestedName: name)
         case "print":
             printDocument(title: body["title"] as? String ?? "Documento")
+        case "title":
+            let t = (body["title"] as? String ?? "").trimmingCharacters(in: .whitespaces)
+            window.title = t.isEmpty ? "Word" : t
+        case "theme":
+            switch body["theme"] as? String {
+            case "dark": window.appearance = NSAppearance(named: .darkAqua)
+            case "light": window.appearance = NSAppearance(named: .aqua)
+            default: window.appearance = nil
+            }
         default: break
         }
     }
@@ -84,13 +103,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
     func saveFile(data: Data, suggestedName: String) {
         let panel = NSSavePanel()
         panel.nameFieldStringValue = suggestedName
-        if let docx = UTType(filenameExtension: "docx") { panel.allowedContentTypes = [docx] }
+        let ext = (suggestedName as NSString).pathExtension
+        if !ext.isEmpty, let type = UTType(filenameExtension: ext) { panel.allowedContentTypes = [type] }
         panel.canCreateDirectories = true
+        panel.isExtensionHidden = false
         panel.beginSheetModal(for: window) { resp in
             guard resp == .OK, let url = panel.url else { return }
             do {
                 try data.write(to: url, options: .atomic)
-                self.toast("Salvato in «\(url.lastPathComponent)»")
+                NSDocumentController.shared.noteNewRecentDocumentURL(url)
+                self.webView.evaluateJavaScript("window.word && window.word.saved(\(self.jsString(url.lastPathComponent)))")
             } catch {
                 self.toast("Errore durante il salvataggio: \(error.localizedDescription)")
             }
@@ -112,7 +134,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
     }
 
     func toast(_ text: String) {
-        webView.evaluateJavaScript("window.parola && window.parola.toast(\(jsString(text)))")
+        webView.evaluateJavaScript("window.word && window.word.toast(\(jsString(text)))")
     }
 
     func jsString(_ s: String) -> String {
@@ -128,7 +150,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
         let panel = NSOpenPanel()
         panel.allowsMultipleSelection = parameters.allowsMultipleSelection
         panel.canChooseDirectories = false
-        panel.beginSheetModal(for: window) { resp in completionHandler(resp == .OK ? panel.urls : nil) }
+        panel.beginSheetModal(for: window) { resp in
+            if resp == .OK { panel.urls.forEach { NSDocumentController.shared.noteNewRecentDocumentURL($0) } }
+            completionHandler(resp == .OK ? panel.urls : nil)
+        }
     }
 
     func webView(_ webView: WKWebView, runJavaScriptAlertPanelWithMessage message: String,
@@ -173,43 +198,53 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
 
     // MARK: Menu
 
-    @objc func cmdNew() { run("new") }
-    @objc func cmdOpen() { run("open") }
-    @objc func cmdSave() { run("save") }
-    @objc func cmdPrint() { run("print") }
-    @objc func cmdFind() { run("find") }
-    @objc func cmdReplace() { run("replace") }
-    func run(_ c: String) { webView.evaluateJavaScript("window.parola && window.parola.command('\(c)')") }
+    @objc func menuCommand(_ sender: NSMenuItem) {
+        guard let c = sender.representedObject as? String else { return }
+        webView.evaluateJavaScript("window.word && window.word.command('\(c)')")
+    }
 
     func buildMenu() {
         let main = NSMenu()
-        func item(_ title: String, _ action: Selector?, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command, target: AnyObject? = nil) -> NSMenuItem {
+        func item(_ title: String, _ action: Selector?, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
             let i = NSMenuItem(title: title, action: action, keyEquivalent: key)
             i.keyEquivalentModifierMask = mods
-            if let t = target { i.target = t }
             return i
         }
-        func submenu(_ title: String, _ items: [NSMenuItem]) -> NSMenuItem {
-            let top = NSMenuItem(); let m = NSMenu(title: title)
+        // voce che passa un comando alla pagina
+        func cmd(_ title: String, _ command: String, _ key: String = "", _ mods: NSEvent.ModifierFlags = .command) -> NSMenuItem {
+            let i = item(title, #selector(menuCommand(_:)), key, mods)
+            i.target = self
+            i.representedObject = command
+            return i
+        }
+        func submenu(_ title: String, _ items: [NSMenuItem], into parent: NSMenu? = nil) -> NSMenuItem {
+            let top = NSMenuItem(title: title, action: nil, keyEquivalent: ""); let m = NSMenu(title: title)
             items.forEach { m.addItem($0) }
-            top.submenu = m; main.addItem(top); return top
+            top.submenu = m
+            (parent ?? main).addItem(top)
+            return top
         }
 
-        _ = submenu("Parola", [
-            item("Informazioni su Parola", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
+        _ = submenu("Word", [
+            item("Informazioni su Word", #selector(NSApplication.orderFrontStandardAboutPanel(_:))),
             .separator(),
-            item("Nascondi Parola", #selector(NSApplication.hide(_:)), "h"),
+            item("Nascondi Word", #selector(NSApplication.hide(_:)), "h"),
             item("Nascondi altre", #selector(NSApplication.hideOtherApplications(_:)), "h", [.command, .option]),
             item("Mostra tutte", #selector(NSApplication.unhideAllApplications(_:))),
             .separator(),
-            item("Esci da Parola", #selector(NSApplication.terminate(_:)), "q"),
+            item("Esci da Word", #selector(NSApplication.terminate(_:)), "q"),
         ])
+        let exportMenu = NSMenu(title: "Esporta")
+        [cmd("Pagina web (.html)…", "html"), cmd("Markdown (.md)…", "md"), cmd("Testo semplice (.txt)…", "txt")].forEach { exportMenu.addItem($0) }
+        let exportItem = NSMenuItem(title: "Esporta", action: nil, keyEquivalent: "")
+        exportItem.submenu = exportMenu
         _ = submenu("File", [
-            item("Nuovo", #selector(cmdNew), "n", target: self),
-            item("Apri…", #selector(cmdOpen), "o", target: self),
+            cmd("Nuovo", "new", "n"),
+            cmd("Apri…", "open", "o"),
             .separator(),
-            item("Salva .docx…", #selector(cmdSave), "s", target: self),
-            item("Stampa / PDF…", #selector(cmdPrint), "p", target: self),
+            cmd("Salva .docx…", "save", "s"),
+            exportItem,
+            cmd("Stampa / PDF…", "print", "p"),
             .separator(),
             item("Chiudi finestra", #selector(NSWindow.performClose(_:)), "w"),
         ])
@@ -223,17 +258,33 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate,
             item("Incolla e adatta stile", #selector(NSTextView.pasteAsPlainText(_:)), "v", [.command, .option, .shift]),
             item("Seleziona tutto", #selector(NSText.selectAll(_:)), "a"),
             .separator(),
-            item("Trova…", #selector(cmdFind), "f", target: self),
-            item("Sostituisci…", #selector(cmdReplace), "h", [.command, .option], target: self),
+            cmd("Trova…", "find", "f"),
+            cmd("Sostituisci…", "replace", "h", [.command, .option]),
+            .separator(),
+            cmd("Cerca un comando…", "search", "j"),
         ])
         _ = submenu("Vista", [
+            cmd("Struttura del documento", "nav"),
+            cmd("Modalità concentrazione", "focus"),
+            .separator(),
+            cmd("Ingrandisci", "zoomIn", "+"),
+            cmd("Riduci", "zoomOut", "-"),
+            cmd("Dimensioni reali", "zoomReset", "0"),
+            .separator(),
             item("Schermo intero", #selector(NSWindow.toggleFullScreen(_:)), "f", [.command, .control]),
+        ])
+        _ = submenu("Strumenti", [
+            cmd("Conteggio parole", "count", "g", [.command, .shift]),
         ])
         let win = submenu("Finestra", [
             item("Contrai", #selector(NSWindow.performMiniaturize(_:)), "m"),
             item("Zoom", #selector(NSWindow.performZoom(_:))),
         ])
+        let help = submenu("Aiuto", [
+            cmd("Scorciatoie da tastiera", "keys", "/"),
+        ])
         NSApp.windowsMenu = win.submenu
+        NSApp.helpMenu = help.submenu
         NSApp.mainMenu = main
     }
 }
