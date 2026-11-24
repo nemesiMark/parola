@@ -32,7 +32,7 @@ Compare tra i lavori del sito Nemesi Web (~/Desktop/Sites/nemesiWeb) come «Word
 
 
 ## App installabile (PWA)
-- `manifest.webmanifest`, `sw.js` (copia dei file per l'uso senza rete; cache `nemesi-word-N`: **alzare `VERSIONE` in `sw.js` e aggiornare `FILE` quando si aggiungono o rinominano file**), `icone/` (`icona.svg` → PNG 180/192/512 a tutto quadrato), `installa.js` (uguale nelle quattro app di Nemesi Web: registra `sw.js` e con `?installa` nell'indirizzo mostra il riquadro per installare).
+- `manifest.webmanifest`, `sw.js` (copia dei file per l'uso senza rete; cache `nemesi-word-N`: **alzare `VERSIONE` in `sw.js` e aggiornare `FILE` quando si aggiungono o rinominano file**), `icone/` (`icona.svg` → PNG 180/192/512 a tutto quadrato), `installa.js` (uguale nelle quattro app di Nemesi Web: registra `sw.js` e con `?installa` nell'indirizzo mostra il riquadro per installare). Nel manifest `id` dev'essere `"/word/"` (con `"./"` diventa la radice di nemesimark.github.io per tutte le app: Chrome le scambia per la stessa app e installarne una sovrascrive l'altra).
 - Il portfolio Nemesi Web porta a `…/?installa` con il link «Installa».
 
 ## Regole di lavoro
