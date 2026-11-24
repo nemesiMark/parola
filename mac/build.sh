@@ -21,7 +21,7 @@ swiftc -O -target arm64-apple-macos12 \
   "$MAC/main.swift" -o "$APP/Contents/MacOS/Word"
 
 echo "→ Copio l'editor"
-cp "$ROOT/index.html" "$ROOT/style.css" "$ROOT/app.js" "$ROOT/docx-export.js" "$ROOT/icon.svg" "$APP/Contents/Resources/web/"
+cp "$ROOT/index.html" "$ROOT/style.css" "$ROOT/app.js" "$ROOT/docx-export.js" "$ROOT/icon.svg" "$ROOT/installa.js" "$APP/Contents/Resources/web/"
 cp "$ROOT/vendor/"*.js "$APP/Contents/Resources/web/vendor/"
 cp "$MAC/Info.plist" "$APP/Contents/Info.plist"
 

@@ -30,6 +30,11 @@ Compare tra i lavori del sito Nemesi Web (~/Desktop/Sites/nemesiWeb) come «Word
 - App Mac: identificativo `it.nemesi.word` (prima `it.parola.editor`); la prima installazione copia `~/Library/WebKit/it.parola.editor` in `it.nemesi.word`. Ponte pagina↔app: `window.webkit.messageHandlers.word` (messaggi `save`, `print`, `title`, `theme`) e `window.word` (`toast`, `command`, `openBase64`, `saved`).
 - Ricerca: le evidenziazioni usano la CSS Custom Highlight API (dove manca, la ricerca funziona lo stesso senza evidenziare tutti i risultati).
 
+
+## App installabile (PWA)
+- `manifest.webmanifest`, `sw.js` (copia dei file per l'uso senza rete; cache `nemesi-word-N`: **alzare `VERSIONE` in `sw.js` e aggiornare `FILE` quando si aggiungono o rinominano file**), `icone/` (`icona.svg` → PNG 180/192/512 a tutto quadrato), `installa.js` (uguale nelle quattro app di Nemesi Web: registra `sw.js` e con `?installa` nell'indirizzo mostra il riquadro per installare).
+- Il portfolio Nemesi Web porta a `…/?installa` con il link «Installa».
+
 ## Regole di lavoro
 - Testi in italiano.
 - Commit solo su richiesta; «g» = prove automatiche, poi commit e push su `origin main`.
