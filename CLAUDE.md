@@ -9,7 +9,7 @@ Fino a novembre 2026 si chiamava «Parola»; dal 22/11/2026 anche cartella, repo
 ## Dove sta online
 Repository: https://github.com/nemesiMark/word (ramo `main`, pubblico).
 Online con GitHub Pages: https://nemesimark.github.io/word/ (si aggiorna a ogni push su main).
-Compare tra i lavori del sito Nemesi Web (~/Desktop/Sites/nemesiWeb) come «Word».
+Compare tra i lavori del sito Nemesi Web (~/Documents/work/Sites/nemesiWeb) come «Word».
 
 ## Come si prova in locale
 - Aprire `index.html` nel browser (doppio clic), oppure `python3 -m http.server 8000` nella cartella.
